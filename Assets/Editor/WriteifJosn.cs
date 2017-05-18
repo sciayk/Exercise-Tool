@@ -1,18 +1,18 @@
-﻿using System.Collections;
+﻿using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
-using LitJson;
 using System.IO;
 using System.Text;
 using UnityEditor;
-using Excel;
+using System.Threading;
 
 public class WriteifJosn :EditorWindow
 {
 
     string LoadDataPath;
     string SaveDataPath;
-
+    Thread th ;
+    private static Object thisLock = new Object();
     LoadExcle Loading = new LoadExcle();
 
 	List<string> Tabl = new List<string>() {"DataInput", "DataInput_JP",  "SoundLib", "FaceLib"};
@@ -103,7 +103,7 @@ public class WriteifJosn :EditorWindow
             }
         }
         GUILayout.Label("=====================================================================================================================");
-        GUILayout.Label("Chose u Setting Excel");
+        GUILayout.Label("Chose you need TableName");
         if (ExcelName.Count > 0)
         {
             toolbarInt = GUILayout.Toolbar(toolbarInt, ExcelName.ToArray());
@@ -118,7 +118,7 @@ public class WriteifJosn :EditorWindow
                 for (int i = 0; i < TableName.Count; i++)
                 {
                     GUILayout.BeginHorizontal();
-                    TableName[i] = EditorGUILayout.TextField(TableName[i]);
+                    EditorGUILayout.LabelField(TableName[i]);
                     if (GUILayout.Button("X", GUILayout.Width(30)))
                     {
                         TableName.RemoveAt(i);
@@ -134,40 +134,50 @@ public class WriteifJosn :EditorWindow
         GUILayout.EndVertical();
         if (GUILayout.Button("開始轉檔(Json)"))
         {
-            ModelCreater();
+            th = new Thread(ModelCreater);
+            th.Start();
         }
     }
     public void ModelCreater()
     {
-        for (int ExcelCount = 0; ExcelCount < ExcelName.Count; ExcelCount++)
-        {
-            for (int i = 0; i < TableName.Count; i++)
+        lock (this){
+            for (int ExcelCount = 0; ExcelCount < ExcelName.Count; ExcelCount++)
             {
-                File.Delete(SaveDataPath + TableName[i] + ".json");
-                TitleALL.Clear();
-                TitleALL = Loading.GetExcelTableTitleName(ExcelName[ExcelCount], TableName[i], LoadDataPath);
-                for (int w = 0; w < TitleALL.Count; w++)
+                for (int i = 0; i < TableName.Count; i++)
                 {
-                    SaveDate[w] = Loading.LoadExcleData(TableName[i], TitleALL[w], LoadDataPath);
-                }
-                for (int w = 0; w < SaveDate[0].Count; w++)
-                {
-                    List<string> DateExcel = new List<string>();
-                    DateExcel.Clear();
-                    for (int Sa = 0; Sa < TitleALL.Count; Sa++)
+                    if (File.Exists(SaveDataPath + TableName[i] + ".json"))
                     {
-                        DateExcel.Add(SaveDate[Sa][w]);
+                        File.Delete(SaveDataPath + TableName[i] + ".json");
+                        //Debug.Log("Delete json : " + TableName[i]);
                     }
-                    ExcelData.Add(DateExcel);
+
+                    TitleALL.Clear();
+                    TitleALL = Loading.GetExcelTableTitleName(ExcelName[ExcelCount], TableName[i], LoadDataPath);
+                    for (int w = 0; w < TitleALL.Count; w++)
+                    {
+                        SaveDate[w] = Loading.LoadExcleData(TableName[i], TitleALL[w], LoadDataPath);
+                    }
+                    for (int w = 0; w < SaveDate[0].Count; w++)
+                    {
+                        List<string> DateExcel = new List<string>();
+                        DateExcel.Clear();
+                        for (int Sa = 0; Sa < TitleALL.Count; Sa++)
+                        {
+                            DateExcel.Add(SaveDate[Sa][w]);
+                        }
+                        ExcelData.Add(DateExcel);
+                    }
+                    for (int a = 1; a < ExcelData.Count; a++)
+                    {
+                        outputJsonFile(writeJson(TitleALL.ToArray(), ExcelData[a].ToArray(), a, ExcelData.Count), SaveDataPath + TableName[i] + ".json");
+                    }
+                   Debug.Log("Born Josn : " + TableName[i]);
+                    ExcelData.Clear();
                 }
-                for (int a = 1; a < ExcelData.Count; a++)
-                {
-                    outputJsonFile(writeJson(TitleALL.ToArray(), ExcelData[a].ToArray(), a, ExcelData.Count), SaveDataPath + TableName[i] + ".json");
-                }
-                Debug.Log("End Born Josn : " + TableName[i]);
-                ExcelData.Clear();
             }
+           
         }
+        
     }
 
     string writeJson(string[] key, string[] value,int a,int Count)
@@ -185,6 +195,7 @@ public class WriteifJosn :EditorWindow
         sb.AppendLine("{");
         for (int i = 0; i < key.Length; i++)
         {
+           // Debug.Log(key[i]+" || "+ value[i]);
             if (i == key.Length - 1)
             {
                 sb.AppendLine("\"" + key[i] + "\":\"" + value[i] + "\"");
@@ -202,6 +213,7 @@ public class WriteifJosn :EditorWindow
         else {
             sb.AppendLine("},");
         }
+
         return sb.ToString();
     }
     void outputJsonFile(string sb,string SavePath)
@@ -211,4 +223,5 @@ public class WriteifJosn :EditorWindow
             sw.WriteLine(sb);
         }
     }
+   
 }
