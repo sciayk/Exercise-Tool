@@ -185,7 +185,7 @@ public class WriteifJosn : EditorWindow
                 {
                     outputJsonFile(writeJson(TitleALL.ToArray(), ExcelData[a].ToArray(), a, ExcelData.Count), SaveDataPath + TableName[i] + ".json");
                 }
-                Debug.Log("Born Josn : " + TableName[i]);
+                //Debug.Log("Born Josn : " + TableName[i]);
                 EndI++;
                 System.Threading.Thread.Sleep(200);
                 // Time wait down for 200ms.System maby not Instance
