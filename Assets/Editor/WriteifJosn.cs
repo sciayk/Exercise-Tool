@@ -4,20 +4,18 @@ using UnityEngine;
 using System.IO;
 using System.Text;
 using UnityEditor;
-using System.Threading;
+
 
 public class WriteifJosn :EditorWindow
 {
 
     string LoadDataPath;
     string SaveDataPath;
-    Thread th ;
-    private static Object thisLock = new Object();
+
     LoadExcle Loading = new LoadExcle();
-
-	List<string> Tabl = new List<string>() {"DataInput", "DataInput_JP",  "SoundLib", "FaceLib"};
-
     List<string> ExcelName=new List<string>();
+
+    //Excel Name Dictionary
     Dictionary<string, List<bool>> Excel = new Dictionary<string, List<bool>>();
     Dictionary<int, List<string>> SaveDate = new Dictionary<int, List<string>>();
 	Dictionary<string,List<string>> ExcelTableName = new Dictionary<string, List<string>> ();
@@ -46,23 +44,23 @@ public class WriteifJosn :EditorWindow
         GUILayout.BeginVertical();
 
         GUILayout.Label("Excel2Json Ver.1.0 ");
-        GUILayout.Label("選擇讀取資料夾");
+        GUILayout.Label("選擇讀取資料夾 / Chose you Excel File");
         GUILayout.Label(LoadDataPath);
-        if (GUILayout.Button("選擇讀取資料夾")) {
-            LoadDataPath = EditorUtility.OpenFolderPanel("選擇資料夾","","") + "/";
+        if (GUILayout.Button("選擇讀取資料夾 / Chose you Excel File")) {
+            LoadDataPath = EditorUtility.OpenFolderPanel("選擇資料夾 / Chose you Excel File","","") + "/";
         }
 
-        GUILayout.Label("Json存放位置");
+        GUILayout.Label("Json存放位置 / Json save path");
         GUILayout.Label(SaveDataPath);
-        if (GUILayout.Button("選擇存放資料夾"))
+        if (GUILayout.Button("選擇存放資料夾  / Json save path"))
         {
-            SaveDataPath = EditorUtility.OpenFolderPanel("選擇資料夾", "", "") + "/";
+            SaveDataPath = EditorUtility.OpenFolderPanel("選擇資料夾 / Json save path", "", "") + "/";
 
         }
 
         GUILayout.Label("=====================================================================================================================");
-        EditorGUILayout.HelpBox("請先關閉Excel，才能讀取Excel", MessageType.Warning);
-        if (GUILayout.Button("讀取")) {
+        EditorGUILayout.HelpBox("Close Excel please.", MessageType.Warning);
+        if (GUILayout.Button("讀取 / Loading")) {
             if (Directory.Exists(LoadDataPath))
             {
                 Priv = 1000;
@@ -72,7 +70,7 @@ public class WriteifJosn :EditorWindow
                 {               
                     if (Allfile[i][0] == '~')
                     {
-                        Debug.Log("是暫存檔");
+                        Debug.Log("Not Excel");
                     }
                     else {
                         FileInfo thisInfo = new FileInfo(Allfile[i]);
@@ -92,7 +90,7 @@ public class WriteifJosn :EditorWindow
                 }       
             }
         }
-        GUILayout.Label("Excel列表");
+        GUILayout.Label("Excel Lable");
         if (ExcelName.Count > 0)
         {
             for (int i = 0; i < ExcelName.Count; i++)
@@ -132,13 +130,21 @@ public class WriteifJosn :EditorWindow
         GUILayout.Label("=====================================================================================================================");
 
         GUILayout.EndVertical();
-        if (GUILayout.Button("開始轉檔(Json)"))
+        if (GUILayout.Button("開始轉檔(Json) / Start born Json"))
         {
-            th = new Thread(ModelCreater);
-            th.Start();
+            try
+            {
+                ModelCreater();
+            }
+            catch (System.Exception ex)
+            {
+                Debug.Log(ex.ToString());
+                throw;
+            }
+          
         }
     }
-    public void ModelCreater()
+    void ModelCreater()
     {
         lock (this){
             for (int ExcelCount = 0; ExcelCount < ExcelName.Count; ExcelCount++)
@@ -172,6 +178,8 @@ public class WriteifJosn :EditorWindow
                         outputJsonFile(writeJson(TitleALL.ToArray(), ExcelData[a].ToArray(), a, ExcelData.Count), SaveDataPath + TableName[i] + ".json");
                     }
                    Debug.Log("Born Josn : " + TableName[i]);
+ 	           System.Threading.Thread.Sleep(200);
+	           // Time wait down for 200ms.System maby not Instance
                     ExcelData.Clear();
                 }
             }

@@ -11,10 +11,5 @@ public class EditorToolsMenu : EditorWindow {
         EditorWindow.GetWindow(typeof(WriteifJosn));
     }
 
-	[MenuItem("MyTool/FlyCat/CheckUI", false, 0)]
-    static void CheckUI()
-    {
-        EditorWindow.GetWindow(typeof(CheckUIAct));
-    }
 
 }
